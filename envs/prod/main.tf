@@ -7,6 +7,7 @@ module "environment" {
   }
 
   environment         = "prod"
+  dbt_public_key_path = "~/.snowflake/keys/svc_dbt_prod.pub"
   warehouse_size      = "XSMALL"
   data_retention_days = 7
 }
@@ -60,4 +61,16 @@ output "transformer_role" {
 
 output "analyst_role" {
   value = snowflake_account_role.analyst.name
+}
+
+output "analytics_database" {
+  value = module.environment.analytics_database
+}
+
+output "warehouse" {
+  value = module.environment.warehouse
+}
+
+output "dbt_user" {
+  value = module.environment.dbt_user
 }

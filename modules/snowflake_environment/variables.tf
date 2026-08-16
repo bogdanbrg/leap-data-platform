@@ -25,3 +25,8 @@ variable "data_retention_days" {
   type        = number
   default     = 1
 }
+
+variable "dbt_public_key_path" {
+  description = "Path to the PEM public key for this environment's dbt service user. The private half never enters Terraform."
+  type        = string
+}

@@ -15,3 +15,8 @@ output "analytics_database" {
 output "warehouse" {
   value = snowflake_warehouse.transform.name
 }
+
+output "dbt_user" {
+  description = "Snowflake service user dbt authenticates as in this environment."
+  value       = snowflake_service_user.dbt.name
+}
