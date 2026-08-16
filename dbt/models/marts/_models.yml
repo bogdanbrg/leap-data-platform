@@ -12,12 +12,14 @@ models:
         data_tests:
           - not_null
           - relationships:
-              to: ref('dim_customer')
-              field: customer_key
+              arguments:
+                to: ref('dim_customer')
+                field: customer_key
       - name: order_status
         data_tests:
           - accepted_values:
-              values: ['O', 'F', 'P']
+              arguments:
+                values: ['O', 'F', 'P']
 
   - name: dim_customer
     description: One row per customer.
@@ -27,8 +29,9 @@ models:
       - name: nation_key
         data_tests:
           - relationships:
-              to: ref('dim_nation')
-              field: nation_key
+              arguments:
+                to: ref('dim_nation')
+                field: nation_key
 
   - name: dim_nation
     description: One row per nation, with its region denormalised in.
