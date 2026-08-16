@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: tpch
+    description: >
+      Snowflake's TPC-H sample data, standing in for the RAW landing zone.
+      Ingestion is out of scope for this case; in production an EL tool would
+      land equivalent data in RAW_{ENV} and this source would point there.
+    database: SNOWFLAKE_SAMPLE_DATA
+    schema: TPCH_SF1
+    tables:
+      - name: customer
+      - name: orders
+      - name: lineitem
+      - name: nation
+      - name: region

@@ -86,6 +86,7 @@ resource "dbtcloud_job" "production" {
   project_id     = dbtcloud_project.leap.id
   environment_id = dbtcloud_environment.prod.environment_id
   name           = "Production build"
+  target_name    = "prod"
   execute_steps  = ["dbt build"]
   num_threads    = 4
 
@@ -116,4 +117,24 @@ resource "dbtcloud_job" "ci" {
     schedule             = false
     on_merge             = false
   }
+}
+
+########################################
+# Repository link
+########################################
+
+resource "dbtcloud_repository" "leap" {
+  project_id         = dbtcloud_project.leap.id
+  remote_url         = "git@github.com:bogdanbrg/leap-data-platform.git"
+  git_clone_strategy = "deploy_key"
+}
+
+resource "dbtcloud_project_repository" "leap" {
+  project_id    = dbtcloud_project.leap.id
+  repository_id = dbtcloud_repository.leap.repository_id
+}
+
+output "deploy_key" {
+  description = "Register this with the GitHub repo so dbt Cloud can clone it."
+  value       = dbtcloud_repository.leap.deploy_key
 }

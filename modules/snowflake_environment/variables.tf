@@ -30,3 +30,9 @@ variable "dbt_public_key_path" {
   description = "Path to the PEM public key for this environment's dbt service user. The private half never enters Terraform."
   type        = string
 }
+
+variable "shared_source_databases" {
+  description = "Shared/imported databases the read role needs access to. Stands in for the EL layer this case scopes out."
+  type        = list(string)
+  default     = ["SNOWFLAKE_SAMPLE_DATA"]
+}

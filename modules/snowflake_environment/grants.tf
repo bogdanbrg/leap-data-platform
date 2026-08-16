@@ -137,3 +137,17 @@ resource "snowflake_grant_account_role" "transformer_to_sysadmin" {
   role_name        = snowflake_account_role.transformer.name
   parent_role_name = "SYSADMIN"
 }
+
+# Shared databases need IMPORTED PRIVILEGES rather than ordinary grants.
+# SNOWFLAKE_SAMPLE_DATA is our stand-in source, since ingestion is out of scope.
+resource "snowflake_grant_privileges_to_account_role" "read_shared_sources" {
+  provider          = snowflake.securityadmin
+  for_each          = toset(var.shared_source_databases)
+  account_role_name = snowflake_account_role.read.name
+  privileges        = ["IMPORTED PRIVILEGES"]
+
+  on_account_object {
+    object_type = "DATABASE"
+    object_name = each.value
+  }
+}
