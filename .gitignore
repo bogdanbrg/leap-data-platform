@@ -1,0 +1,21 @@
+# Terraform state - contains secrets in plaintext, never commit
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.tfstate.lock.info
+crash.log
+
+# Variable files may contain credentials
+*.tfvars
+*.tfvars.json
+!example.tfvars
+
+# Keys and certificates
+*.p8
+*.pem
+*.key
+
+# OS and editor noise
+.DS_Store
+.vscode/
+.idea/
