@@ -4,8 +4,8 @@ locals {
   dbt_public_key = replace(
     replace(
       replace(file(pathexpand(var.dbt_public_key_path)), "-----BEGIN PUBLIC KEY-----", ""),
-      "-----END PUBLIC KEY-----", ""),
-    "\n", "")
+    "-----END PUBLIC KEY-----", ""),
+  "\n", "")
 }
 
 # One dbt identity per environment. Separate keys mean a compromised dev

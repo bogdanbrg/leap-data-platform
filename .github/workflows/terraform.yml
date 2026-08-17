@@ -1,0 +1,137 @@
+name: Terraform
+
+on:
+  pull_request:
+    paths:
+      - 'envs/**'
+      - 'modules/**'
+      - '.github/workflows/terraform.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'envs/**'
+      - 'modules/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.8
+      - run: terraform fmt -check -recursive
+
+  plan:
+    name: Plan ${{ matrix.env }}
+    if: github.event_name == 'pull_request'
+    needs: fmt
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [dev, prod, dbtcloud]
+    env:
+      DBT_CLOUD_ACCOUNT_ID: ${{ secrets.DBT_CLOUD_ACCOUNT_ID }}
+      DBT_CLOUD_HOST_URL: ${{ secrets.DBT_CLOUD_HOST_URL }}
+      DBT_CLOUD_TOKEN: ${{ secrets.DBT_CLOUD_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Provision Snowflake keys
+        run: |
+          mkdir -p ~/.snowflake/keys
+          printf '%s' "${{ secrets.SNOWFLAKE_TERRAFORM_KEY }}" > ~/.snowflake/keys/svc_terraform.p8
+          printf '%s' "${{ secrets.SNOWFLAKE_DBT_DEV_KEY }}"   > ~/.snowflake/keys/svc_dbt_dev.p8
+          printf '%s' "${{ secrets.SNOWFLAKE_DBT_PROD_KEY }}"  > ~/.snowflake/keys/svc_dbt_prod.p8
+          chmod 600 ~/.snowflake/keys/*.p8
+          openssl rsa -in ~/.snowflake/keys/svc_dbt_dev.p8  -pubout -out ~/.snowflake/keys/svc_dbt_dev.pub
+          openssl rsa -in ~/.snowflake/keys/svc_dbt_prod.p8 -pubout -out ~/.snowflake/keys/svc_dbt_prod.pub
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.8
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Init
+        working-directory: envs/${{ matrix.env }}
+        run: terraform init -input=false
+
+      - name: Validate
+        working-directory: envs/${{ matrix.env }}
+        run: terraform validate -no-color
+
+      - name: Plan
+        id: plan
+        working-directory: envs/${{ matrix.env }}
+        run: terraform plan -no-color -input=false
+        continue-on-error: true
+
+      - name: Comment plan on pull request
+        uses: actions/github-script@v7
+        env:
+          PLAN: ${{ steps.plan.outputs.stdout }}
+          ENVNAME: ${{ matrix.env }}
+        with:
+          script: |
+            const plan = (process.env.PLAN || 'no output').slice(0, 60000)
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### Terraform plan — \`${process.env.ENVNAME}\`\n\n<details><summary>Show plan</summary>\n\n\`\`\`terraform\n${plan}\n\`\`\`\n\n</details>`
+            })
+
+      - name: Fail if plan errored
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+  apply:
+    name: Apply ${{ matrix.env }}
+    if: github.event_name == 'push'
+    needs: fmt
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.env }}
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        env: [dev, prod, dbtcloud]
+    env:
+      DBT_CLOUD_ACCOUNT_ID: ${{ secrets.DBT_CLOUD_ACCOUNT_ID }}
+      DBT_CLOUD_HOST_URL: ${{ secrets.DBT_CLOUD_HOST_URL }}
+      DBT_CLOUD_TOKEN: ${{ secrets.DBT_CLOUD_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Provision Snowflake keys
+        run: |
+          mkdir -p ~/.snowflake/keys
+          printf '%s' "${{ secrets.SNOWFLAKE_TERRAFORM_KEY }}" > ~/.snowflake/keys/svc_terraform.p8
+          printf '%s' "${{ secrets.SNOWFLAKE_DBT_DEV_KEY }}"   > ~/.snowflake/keys/svc_dbt_dev.p8
+          printf '%s' "${{ secrets.SNOWFLAKE_DBT_PROD_KEY }}"  > ~/.snowflake/keys/svc_dbt_prod.p8
+          chmod 600 ~/.snowflake/keys/*.p8
+          openssl rsa -in ~/.snowflake/keys/svc_dbt_dev.p8  -pubout -out ~/.snowflake/keys/svc_dbt_dev.pub
+          openssl rsa -in ~/.snowflake/keys/svc_dbt_prod.p8 -pubout -out ~/.snowflake/keys/svc_dbt_prod.pub
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.15.8
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Init
+        working-directory: envs/${{ matrix.env }}
+        run: terraform init -input=false
+
+      - name: Apply
+        working-directory: envs/${{ matrix.env }}
+        run: terraform apply -auto-approve -input=false

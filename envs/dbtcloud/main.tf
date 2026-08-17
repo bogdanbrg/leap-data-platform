@@ -20,29 +20,29 @@ resource "dbtcloud_global_connection" "snowflake" {
 ########################################
 
 resource "dbtcloud_snowflake_credential" "dev" {
-  project_id  = dbtcloud_project.leap.id
-  auth_type   = "keypair"
-  user        = local.dev.dbt_user
+  project_id             = dbtcloud_project.leap.id
+  auth_type              = "keypair"
+  user                   = local.dev.dbt_user
   private_key_wo         = file(pathexpand("~/.snowflake/keys/svc_dbt_dev.p8"))
   private_key_wo_version = 1
-  role        = local.dev.transformer_role
-  database    = local.dev.analytics_database
-  warehouse   = local.dev.warehouse
-  schema      = "DBT_BOGDAN"
-  num_threads = 4
+  role                   = local.dev.transformer_role
+  database               = local.dev.analytics_database
+  warehouse              = local.dev.warehouse
+  schema                 = "DBT_BOGDAN"
+  num_threads            = 4
 }
 
 resource "dbtcloud_snowflake_credential" "prod" {
-  project_id  = dbtcloud_project.leap.id
-  auth_type   = "keypair"
-  user        = local.prod.dbt_user
+  project_id             = dbtcloud_project.leap.id
+  auth_type              = "keypair"
+  user                   = local.prod.dbt_user
   private_key_wo         = file(pathexpand("~/.snowflake/keys/svc_dbt_prod.p8"))
   private_key_wo_version = 1
-  role        = local.prod.transformer_role
-  database    = local.prod.analytics_database
-  warehouse   = local.prod.warehouse
-  schema      = "MARTS"
-  num_threads = 4
+  role                   = local.prod.transformer_role
+  database               = local.prod.analytics_database
+  warehouse              = local.prod.warehouse
+  schema                 = "MARTS"
+  num_threads            = 4
 }
 
 ########################################
