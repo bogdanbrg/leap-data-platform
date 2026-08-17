@@ -14,6 +14,7 @@ select
     o.order_key,
     o.customer_key,
     o.order_date,
+    year(o.order_date)                 as order_year,
     o.order_status,
     o.order_priority,
     o.total_price,

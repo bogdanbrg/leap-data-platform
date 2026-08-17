@@ -7,6 +7,7 @@ module "environment" {
   }
 
   environment         = "dev"
+  analytics_schemas   = ["STAGING", "MARTS", "INTERMEDIATE"]
   dbt_public_key_path = "~/.snowflake/keys/svc_dbt_dev.pub"
   warehouse_size      = "XSMALL"
   data_retention_days = 1
