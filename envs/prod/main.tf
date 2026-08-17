@@ -74,3 +74,9 @@ output "warehouse" {
 output "dbt_user" {
   value = module.environment.dbt_user
 }
+
+resource "snowflake_grant_account_role" "ci_reads_prod" {
+  provider         = snowflake.securityadmin
+  role_name        = module.environment.read_role
+  parent_role_name = data.terraform_remote_state.dev.outputs.transformer_role
+}
