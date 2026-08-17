@@ -151,3 +151,28 @@ resource "snowflake_grant_privileges_to_account_role" "read_shared_sources" {
     object_name = each.value
   }
 }
+
+resource "snowflake_grant_privileges_to_account_role" "read_schema_usage" {
+  provider          = snowflake.securityadmin
+  for_each          = snowflake_schema.analytics
+  account_role_name = snowflake_account_role.read.name
+  privileges        = ["USAGE"]
+
+  on_schema {
+    schema_name = each.value.fully_qualified_name
+  }
+}
+
+resource "snowflake_grant_privileges_to_account_role" "read_schema_tables" {
+  provider          = snowflake.securityadmin
+  for_each          = snowflake_schema.analytics
+  account_role_name = snowflake_account_role.read.name
+  privileges        = ["SELECT"]
+
+  on_schema_object {
+    all {
+      object_type_plural = "TABLES"
+      in_schema          = each.value.fully_qualified_name
+    }
+  }
+}
