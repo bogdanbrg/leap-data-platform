@@ -3,7 +3,7 @@
 An enterprise-shaped Snowflake + dbt platform where every piece of configuration is code,
 reviewed in a pull request, and reproducible from scratch.
 
-Built for the LEAP DevOps/Platform Engineer case study.
+Built for the LEAP Data Engineer case study.
 
 ---
 
@@ -105,9 +105,6 @@ dbt         PR → build only modified models into a temporary schema,
                  → merge → scheduled production build
 ```
 
-Environment separation is enforced by Snowflake RBAC, not by convention: a CI run *cannot*
-write to `ANALYTICS_PROD` because the role it runs as has no privilege to.
-
 ---
 
 ## Manual bootstrap
@@ -183,12 +180,15 @@ copies that drift.
 
 | Not built | Why | What it would be |
 |---|---|---|
-| Ingestion / EL | Case scopes it out; no source system provided | Fivetran or Snowpipe landing into `RAW_*` |
-| OIDC for CI | Needs a cloud account | Short-lived tokens instead of stored secrets |
-| Resource monitors | Require `ACCOUNTADMIN`; the service account is deliberately narrower | Credit quotas with notify and suspend triggers |
-| SSO / SCIM | Not available on a trial | SAML plus automated provisioning |
-| Masking / row access policies | No sensitive data here | Tag-based masking on PII columns |
-| Account-per-environment | Administration cost exceeds the case | Separate accounts under one organisation |
+| Ingestion | No source system was provided | Fivetran or Snowpipe landing into `RAW_*` |
+| Short-lived CI credentials | Needs a cloud account I don't have | OIDC — tokens that expire, instead of stored keys |
+| Spending limits | Require rights the service account deliberately lacks | Resource monitors with notify and suspend triggers |
+| Column masking | No sensitive data here | Tag-based masking policies on PII columns |
+
+The personas above authenticate with SSO because that is how this should work; SSO and SCIM
+provisioning are not available on a Snowflake trial, so human access currently uses
+password plus MFA. An account per environment was considered and rejected — the reasoning
+is in [`docs/architecture.md`](docs/architecture.md).
 
 `RAW_DEV` and `RAW_PROD` are created but empty. They mark where an EL layer would land data,
 and make explicit the boundary dbt must not write across. Sources currently point at
